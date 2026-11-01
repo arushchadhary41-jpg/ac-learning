@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10152d">
+<title>AC Learning</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0b1020;--panel:#141c35;--panel2:#1b2544;--text:#f4f6ff;--muted:#aab4d0;--blue:#5b8cff;--cyan:#39d5e8;--line:#2a3659;--green:#4ade80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:12px;padding:11px 15px;background:var(--blue);color:white;font-weight:700}button.secondary{background:#273454;color:#eaf0ff}button.danger{background:#8f3348}.wrap{max-width:1150px;margin:auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:11px}.logo{height:43px;width:43px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;font-weight:900;color:#071126}.brand h1{font-size:21px;margin:0}.brand small{color:var(--muted)}.top-actions{display:flex;gap:8px;flex-wrap:wrap}.hero{margin:22px 0;padding:25px;border:1px solid var(--line);border-radius:22px;background:radial-gradient(circle at 90% 10%,#28477a 0,transparent 38%),linear-gradient(120deg,#18264a,#121a33)}.hero h2{font-size:clamp(25px,5vw,38px);margin:0 0 8px}.hero p{color:#c5d2ef;margin:0 0 17px}.ad{border:1px dashed #66769d;color:#b9c5df;text-align:center;border-radius:14px;padding:13px;margin:16px 0;background:#101831}.nav{display:flex;gap:8px;overflow:auto;padding:5px 0 14px}.nav button{white-space:nowrap;background:#1b2542;color:#cbd6f2}.nav button.active{background:linear-gradient(100deg,var(--blue),#6b70ee);color:white}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px}.section-head h2{margin:0;font-size:21px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px}.card h3{margin:0 0 8px}.muted{color:var(--muted);font-size:14px}.tag{display:inline-block;background:#26385f;color:#cfe0ff;border-radius:20px;padding:5px 9px;font-size:12px;margin:3px 4px 3px 0}.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.card-actions button{padding:8px 11px;font-size:13px}.hidden{display:none!important}.form{display:grid;gap:10px;max-width:650px}.form input,.form select,.form textarea{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:#0e1630;color:var(--text)}.form label{font-size:13px;color:var(--muted)}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{padding:12px;border-radius:12px;background:#172b3a;border:1px solid #28556a;color:#bdeefa;font-size:13px;margin:12px 0}.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:15px}.footer{color:#7180a4;text-align:center;font-size:12px;padding:28px 0}.login{max-width:430px;margin:35px auto}.stat{font-size:27px;font-weight:800}.status{font-size:13px;color:var(--green);margin-top:8px}.error{color:#ff9cae}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row input{flex:1;min-width:180px}
+@media(max-width:600px){.wrap{padding:13px}.hero{padding:20px}.form-row{grid-template-columns:1fr}.top-actions button{padding:9px 11px}.brand h1{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+ <div class="brand"><div class="logo">AC</div><div><h1>AC Learning</h1><small>Learn • Practise • Grow</small></div></div>
+ <div class="top-actions"><button class="secondary" id="themeBtn">☀️ Theme</button><button id="loginBtn">Login</button><button class="secondary hidden" id="logoutBtn">Logout</button></div>
+</header>
+<div id="message" class="notice">Connect your Supabase project to load AC Learning.</div>
+<section id="loginPanel" class="card login hidden">
+ <h2>Student / Admin Login</h2>
+ <p class="muted">Use the email and password created in Supabase Authentication.</p>
+ <form id="loginForm" class="form">
+  <label>Email<input name="email" type="email" required autocomplete="username"></label>
+  <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+  <button type="submit">Login securely</button>
+ </form>
+ <p class="muted">For now, accounts are created by the project owner in Supabase. Do not share your password.</p>
+</section>
+<div id="studentView">
+ <section class="hero"><span class="tag">LEARN • PRACTISE • GROW</span><h2>Welcome to AC Learning</h2><p>Your learning space for courses, lectures, notes and tests.</p><button onclick="showTab('courses')">Explore Courses →</button></section>
+ <div class="ad">ADVERTISEMENT SPACE · Ads are not active yet</div>
+ <nav class="nav" id="studentNav">
+  <button class="active" data-tab="home">Home</button><button data-tab="courses">Courses</button><button data-tab="lectures">Lectures</button><button data-tab="notes">Notes</button><button data-tab="tests">Tests</button><button data-tab="announcements">Updates</button>
+ </nav>
+ <main id="studentContent"></main>
+</div>
+<div id="adminView" class="hidden">
+ <div class="notice">Admin access is checked from your Supabase profile. Only a profile with role = admin can manage content.</div>
+ <div class="section-head"><h2>Admin Dashboard</h2><button class="secondary" onclick="showAdmin(false)">← Student App</button></div>
+ <div class="grid" id="stats"></div>
+ <nav class="nav" id="adminNav">
+  <button class="active" data-admin="manage">Manage Content</button><button data-admin="add">Add Content</button>
+ </nav>
+ <main id="adminContent"></main>
+</div>
+<div class="footer">AC Learning · Learning platform</div>
+</div>
+<script>
+/* STEP 1: Replace only these two values with your Supabase Project URL and Publishable Key. */
+const SUPABASE_URL = "https://fexwbsjzwwznznvvmtke.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_mu91M2Ghx1HlUtuMLhMPMw_KHS4wVmb";
+
+let supabaseClient = null;
+let currentUser = null;
+let currentRole = "student";
+let activeTab = "home";
+let adminTab = "manage";
+let data = {courses:[], lessons:[], notes:[], tests:[], announcements:[]};
+
+const $ = (id) => document.getElementById(id);
+function msg(text, isError=false){ $("message").textContent=text; $("message").classList.toggle("error",isError); }
+function configured(){return SUPABASE_URL.startsWith("https://") && SUPABASE_ANON_KEY.startsWith("sb_publishable_");}
+function empty(text){return `<div class="empty">${text}</div>`}
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+async function init(){
+ if(!window.supabase){msg("Could not load Supabase library. Check your internet connection.",true);return;}
+ if(!configured()){msg("Setup needed: add your Project URL and Publishable Key in the two constants near the top of this file.");return;}
+ supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(session) await afterLogin(session.user);
+ await loadContent();
+}
+$("loginBtn").onclick=()=>{$("loginPanel").classList.toggle("hidden");};
+$("logoutBtn").onclick=async()=>{if(supabaseClient){await supabaseClient.auth.signOut();}currentUser=null;currentRole="student";$("logoutBtn").classList.add("hidden");$("loginBtn").classList.remove("hidden");showAdmin(false);$("loginPanel").classList.remove("hidden");msg("You are logged out.");};
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!supabaseClient){msg("First add your Supabase URL and Publishable Key.",true);return;}
+ const f=new FormData(e.target);
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});
+ if(error){msg(error.message,true);return;}
+ await afterLogin(data.user);$("loginPanel").classList.add("hidden");await loadContent();
+});
+async function afterLogin(user){
+ currentUser=user;$("loginBtn").classList.add("hidden");$("logoutBtn").classList.remove("hidden");
+ const {data:profile,error}=await supabaseClient.from("profiles").select("role,full_name").eq("id",user.id).maybeSingle();
+ if(error){msg("Logged in, but profile could not be read: "+error.message,true);return;}
+ currentRole=profile?.role||"student";
+ msg("Logged in as "+(profile?.full_name||user.email)+" · "+currentRole);
+ if(currentRole==="admin") showAdmin(true); else showAdmin(false);
+}
+async function loadContent(){
+ if(!supabaseClient){renderStudent();return;}
+ const tables=["courses","lessons","notes","tests","announcements"];
+ for(const table of tables){
+  const {data:rows,error}=await supabaseClient.from(table).select("*").order("created_at",{ascending:false});
+  if(error){console.warn(table,error.message);data[table]=[];}else data[table]=rows||[];
+ }
+ renderStudent();if(currentRole==="admin")renderAdmin();
+}
+function showAdmin(show){$("adminView").classList.toggle("hidden",!show);$("studentView").classList.toggle("hidden",show);if(show)renderAdmin();}
+function showTab(tab){activeTab=tab;document.querySelectorAll("#studentNav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));renderStudent();}
+document.querySelectorAll("#studentNav button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function renderStudent(){
+ const root=$("studentContent");let out="";
+ if(activeTab==="home")out=`<div class="section-head"><h2>Your Classroom</h2></div><div class="grid">
+ <div class="card"><div class="stat">${data.courses.length}</div><div class="muted">Courses</div></div>
+ <div class="card"><div class="stat">${data.lessons.length}</div><div class="muted">Lectures</div></div>
+ <div class="card"><div class="stat">${data.tests.length}</div><div class="muted">Tests</div></div></div>
+ <div class="section-head"><h2>Popular Courses</h2><button class="secondary" onclick="showTab('courses')">View all</button></div>${courseCards(data.courses.slice(0,4))}`;
+ if(activeTab==="courses")out=`<div class="section-head"><h2>All Courses</h2></div>${courseCards(data.courses)}`;
+ if(activeTab==="lectures")out=`<div class="section-head"><h2>Video Lectures</h2></div>${data.lessons.length?`<div class="grid">${data.lessons.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><p class="muted">${esc(x.duration||"Lecture")}</p>${x.video_url?`<button onclick="window.open('${esc(x.video_url)}','_blank')">▶ Watch Lecture</button>`:""}</article>`).join("")}</div>`:empty("No lectures published yet.")}`;
+ if(activeTab==="notes")out=`<div class="section-head"><h2>Study Notes</h2></div>${data.notes.length?`<div class="grid">${data.notes.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><button onclick="window.open('${esc(x.file_url)}','_blank')">Open Notes ↗</button></article>`).join("")}</div>`:empty("No notes uploaded yet.")}`;
+ if(activeTab==="tests")out=`<div class="section-head"><h2>Tests & Practice</h2></div>${data.tests.length?`<div class="grid">${data.tests.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><p class="muted">${esc(x.total_marks||0)} marks</p></article>`).join("")}</div>`:empty("No tests published yet.")}`;
+ if(activeTab==="announcements")out=`<div class="section-head"><h2>Announcements</h2></div>${data.announcements.length?`<div class="grid">${data.announcements.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><p>${esc(x.message)}</p></article>`).join("")}</div>`:empty("No announcements yet.")}`;
+ root.innerHTML=out;
+}
+function courseCards(items){return items.length?`<div class="grid">${items.map(x=>`<article class="card"><span class="tag">${esc(x.class_name||"")}</span><span class="tag">${esc(x.subject||"")}</span><h3>${esc(x.title)}</h3><p class="muted">${esc(x.description||"")}</p></article>`).join("")}</div>`:empty("No courses published yet.");}
+document.querySelectorAll("#adminNav button").forEach(b=>b.onclick=()=>{adminTab=b.dataset.admin;renderAdmin();});
+function renderAdmin(){
+ if(currentRole!=="admin")return;
+ document.querySelectorAll("#adminNav button").forEach(b=>b.classList.toggle("active",b.dataset.admin===adminTab));
+ $("stats").innerHTML=[["Courses",data.courses.length],["Lectures",data.lessons.length],["Notes",data.notes.length],["Tests",data.tests.length]].map(([a,b])=>`<div class="card"><div class="stat">${b}</div><div class="muted">${a}</div></div>`).join("");
+ const root=$("adminContent");
+ if(adminTab==="manage")root.innerHTML=`${adminList("courses","Courses")}${adminList("lessons","Lectures")}${adminList("notes","Notes")}${adminList("tests","Tests")}${adminList("announcements","Announcements")}`;
+ if(adminTab==="add")root.innerHTML=`<div class="card"><h3>Add Content</h3><form id="addForm" class="form">
+ <label>Content type<select name="type"><option value="courses">Course</option><option value="lessons">Video Lecture</option><option value="notes">Note / PDF</option><option value="tests">Test</option><option value="announcements">Announcement</option></select></label>
+ <label>Title<input name="title" required></label>
+ <label>Class (for course)<input name="class_name" placeholder="Class 9"></label>
+ <label>Subject<input name="subject" placeholder="Mathematics"></label>
+ <label>Description / Message<textarea name="description" rows="2"></textarea></label>
+ <label>Video URL (for lecture)<input name="video_url" type="url"></label>
+ <label>PDF URL (for note)<input name="file_url" type="url"></label>
+ <label>Total marks (for test)<input name="total_marks" type="number" min="0"></label>
+ <button type="submit">Save to Supabase</button></form></div>`;
+ const form=$("addForm");if(form)form.onsubmit=addContent;
+}
+function adminList(table,label){
+ return `<div class="section-head"><h2>${label}</h2></div>${data[table].length?`<div class="grid">${data[table].map(x=>`<article class="card"><h3>${esc(x.title)}</h3><div class="card-actions"><button class="danger" onclick="deleteContent('${table}','${x.id}')">Delete</button></div></article>`).join("")}</div>`:empty("No "+label.toLowerCase()+" added yet.")}`;
+}
+async function addContent(e){
+ e.preventDefault();if(currentRole!=="admin"){msg("Admin permission required.",true);return;}
+ const f=new FormData(e.target),type=f.get("type"),title=f.get("title").trim(),description=f.get("description");
+ let row={title};
+ if(type==="courses"){row.class_name=f.get("class_name")||"Class 9";row.subject=f.get("subject")||"General";row.description=description;row.is_published=true;}
+ if(type==="lessons"){row.title=title;row.video_url=f.get("video_url");row.is_published=true;}
+ if(type==="notes"){row.title=title;row.file_url=f.get("file_url");}
+ if(type==="tests"){row.total_marks=Number(f.get("total_marks")||0);row.is_published=true;}
+ if(type==="announcements"){row.message=description||title;}
+ const {error}=await supabaseClient.from(type).insert(row);
+ if(error){msg("Could not save: "+error.message,true);return;}
+ msg("Saved successfully to Supabase.");e.target.reset();await loadContent();adminTab="manage";renderAdmin();
+}
+async function deleteContent(table,id){
+ if(currentRole!=="admin"||!confirm("Delete this item?"))return;
+ const {error}=await supabaseClient.from(table).delete().eq("id",id);
+ if(error){msg("Delete failed: "+error.message,true);return;}
+ msg("Deleted.");await loadContent();
+}
+$("themeBtn").onclick=()=>{document.body.classList.toggle("light");if(document.body.classList.contains("light")){document.body.style.background="#eef2ff";document.body.style.color="#121a33";}else{document.body.style.background="var(--bg)";document.body.style.color="var(--text)";}};
+init();
+</script>
+</body>
+</html>

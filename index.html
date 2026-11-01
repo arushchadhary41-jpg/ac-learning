@@ -75,7 +75,7 @@
    </label>
    <button class="secondary" onclick="togglePlayerFullscreen()">⛶ Fullscreen</button>
   </div>
-  <div id="playerHint" class="player-hint">Quality options depend on the video source. YouTube playback controls are provided by YouTube.</div>
+  <div id="playerHint" class="player-hint">AC Learning clean player · Supports direct MP4 and HLS (.m3u8) video links only.</div>
  </div>
 </div>
 
@@ -164,7 +164,7 @@ function renderAdmin(){
  <label>Class (for course)<input name="class_name" placeholder="Class 9"></label>
  <label>Subject<input name="subject" placeholder="Mathematics"></label>
  <label>Description / Message<textarea name="description" rows="2"></textarea></label>
- <label>Video URL (for lecture)<input name="video_url" type="url"></label>
+ <label>Video URL (direct MP4 or HLS .m3u8 link)<input name="video_url" type="url" placeholder="https://example.com/lecture.mp4" required></label><p class="muted">For the clean AC Learning player, use a direct video file/stream URL. YouTube watch links will not play here.</p>
  <label>PDF URL (for note)<input name="file_url" type="url"></label>
  <label>Total marks (for test)<input name="total_marks" type="number" min="0"></label>
  <button type="submit">Save to Supabase</button></form></div>`;
@@ -241,40 +241,11 @@ async function openPlayer(encodedUrl,encodedTitle){
  $("playerTitle").textContent=title;$("playerStage").innerHTML="";
  $("playerModal").classList.add("open");document.body.style.overflow="hidden";
  $("playerSpeed").value="1";$("qualityWrap").classList.add("hidden");
- $("playerHint").textContent="Quality options depend on the video source. YouTube playback controls are provided by YouTube.";
+ $("playerHint").textContent="AC Learning clean player · Supports direct MP4 and HLS (.m3u8) video links only.";
  if(activeHls){activeHls.destroy();activeHls=null;}youtubePlayer=null;
  const ytId=getYouTubeId(url);
- const vimeoId=getVimeoId(url);
- if(ytId){
-  const iframe=document.createElement("iframe");
-  const params=new URLSearchParams({playsinline:"1",controls:"1",rel:"0"});
-  if(location.origin && location.origin!=="null") params.set("origin",location.origin);
-  iframe.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(ytId)+"?"+params.toString();
-  iframe.title=title;
-  iframe.referrerPolicy="strict-origin-when-cross-origin";
-  iframe.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen";
-  iframe.allowFullscreen=true;
-  iframe.style.width="100%";iframe.style.height="100%";iframe.style.border="0";
-  $("playerStage").appendChild(iframe);
-  $("playerHint").textContent="YouTube is embedded inside AC Learning. Use YouTube Settings for available quality and speed. If Error 153 appears in HopWeb Preview, the WebView is not supplying the Referer required by YouTube; an HTML page cannot force the app to provide it.";
-  return;
- }
- if(vimeoId){
-  const iframe=document.createElement("iframe");iframe.src="https://player.vimeo.com/video/"+encodeURIComponent(vimeoId)+"?title=0&byline=0&portrait=0";iframe.allow="autoplay; fullscreen; picture-in-picture";iframe.allowFullscreen=true;$("playerStage").appendChild(iframe);
-  $("playerHint").textContent="Vimeo is embedded inside AC Learning. Playback options depend on Vimeo and the video owner.";
-  return;
- }
- const telegramEmbed=getTelegramEmbedUrl(url);
- if(telegramEmbed){
-  const iframe=document.createElement("iframe");
-  iframe.src=telegramEmbed;iframe.loading="lazy";iframe.allow="autoplay; fullscreen; picture-in-picture";iframe.allowFullscreen=true;
-  iframe.style.width="100%";iframe.style.height="100%";iframe.style.minHeight="360px";
-  $("playerStage").appendChild(iframe);
-  $("playerHint").textContent="Telegram public post is embedded inside AC Learning. The post must be from a public channel and allow embedding. Telegram controls quality and playback speed; private channel links cannot be embedded this way.";
-  return;
- }
- if(/(^|\.)t\.me\//i.test(url)){
-  $("playerHint").textContent="This Telegram link is not a public post URL. Use a public channel post link such as https://t.me/channelname/123. Private group/channel videos need Telegram access and cannot be played directly from a normal web link.";
+ if(ytId || getVimeoId(url) || /(^|\.)t\.me\//i.test(url)){
+  $("playerHint").textContent="AC Learning clean player supports direct MP4 links and HLS (.m3u8) streams only. This is an external platform link. Add a direct MP4/HLS URL to play without YouTube or other platform branding.";
   return;
  }
  const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="metadata";video.id="acVideo";$("playerStage").appendChild(video);
@@ -325,4 +296,4 @@ $("themeBtn").onclick=()=>{document.body.classList.toggle("light");if(document.b
 init();
 </script>
 </body>
-     </html>
+ </html>

@@ -1,1 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#10152d">
+<title>AC Learning</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0b1020;--panel:#141c35;--panel2:#1b2544;--text:#f4f6ff;--muted:#aab4d0;--blue:#5b8cff;--cyan:#39d5e8;--line:#2a3659;--green:#4ade80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:12px;padding:11px 15px;background:var(--blue);color:white;font-weight:700}button.secondary{background:#273454;color:#eaf0ff}button.danger{background:#8f3348}.wrap{max-width:1150px;margin:auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:11px}.logo{height:43px;width:43px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:grid;place-items:center;font-weight:900;color:#071126}.brand h1{font-size:21px;margin:0}.brand small{color:var(--muted)}.top-actions{display:flex;gap:8px;flex-wrap:wrap}.hero{margin:22px 0;padding:25px;border:1px solid var(--line);border-radius:22px;background:radial-gradient(circle at 90% 10%,#28477a 0,transparent 38%),linear-gradient(120deg,#18264a,#121a33)}.hero h2{font-size:clamp(25px,5vw,38px);margin:0 0 8px}.hero p{color:#c5d2ef;margin:0 0 17px}.ad{border:1px dashed #66769d;color:#b9c5df;text-align:center;border-radius:14px;padding:13px;margin:16px 0;background:#101831}.nav{display:flex;gap:8px;overflow:auto;padding:5px 0 14px}.nav button{white-space:nowrap;background:#1b2542;color:#cbd6f2}.nav button.active{background:linear-gradient(100deg,var(--blue),#6b70ee);color:white}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 12px}.section-head h2{margin:0;font-size:21px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:16px}.card h3{margin:0 0 8px}.muted{color:var(--muted);font-size:14px}.tag{display:inline-block;background:#26385f;color:#cfe0ff;border-radius:20px;padding:5px 9px;font-size:12px;margin:3px 4px 3px 0}.card-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.card-actions button{padding:8px 11px;font-size:13px}.hidden{display:none!important}.form{display:grid;gap:10px;max-width:650px}.form input,.form select,.form textarea{width:100%;padding:12px;border-radius:11px;border:1px solid var(--line);background:#0e1630;color:var(--text)}.form label{font-size:13px;color:var(--muted)}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.notice{padding:12px;border-radius:12px;background:#172b3a;border:1px solid #28556a;color:#bdeefa;font-size:13px;margin:12px 0}.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:15px}.footer{color:#7180a4;text-align:center;font-size:12px;padding:28px 0}.login{max-width:430px;margin:35px auto}.stat{font-size:27px;font-weight:800}.status{font-size:13px;color:var(--green);margin-top:8px}.error{color:#ff9cae}.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row input{flex:1;min-width:180px}
 
+.player-modal{position:fixed;inset:0;z-index:9999;background:rgba(3,7,18,.94);display:none;overflow:auto;padding:18px}
+.player-modal.open{display:block}.player-shell{max-width:1000px;margin:0 auto;background:#111a31;border:1px solid #344365;border-radius:18px;padding:14px}
+.player-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.player-stage{background:#000;aspect-ratio:16/9;width:100%;display:grid;place-items:center;border-radius:12px;overflow:hidden}
+.player-stage video,.player-stage iframe{width:100%;height:100%;border:0;object-fit:contain}
+.player-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.player-controls label{font-size:13px;color:var(--muted);display:flex;gap:7px;align-items:center}
+.player-controls select{background:#0e1630;color:white;border:1px solid var(--line);border-radius:9px;padding:9px}
+.player-hint{font-size:12px;color:var(--muted);margin-top:9px}
+@media(max-width:600px){.wrap{padding:13px}.hero{padding:20px}.form-row{grid-template-columns:1fr}.top-actions button{padding:9px 11px}.brand h1{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+ <div class="brand"><div class="logo">AC</div><div><h1>AC Learning</h1><small>Learn • Practise • Grow</small></div></div>
+ <div class="top-actions"><button class="secondary" id="themeBtn">☀️ Theme</button><button id="loginBtn">Login</button><button class="secondary hidden" id="logoutBtn">Logout</button></div>
+</header>
+<div id="message" class="notice">Connect your Supabase project to load AC Learning.</div>
+<section id="loginPanel" class="card login hidden">
+ <h2>Student / Admin Login</h2>
+ <p class="muted">Use the email and password created in Supabase Authentication.</p>
+ <form id="loginForm" class="form">
+  <label>Email<input name="email" type="email" required autocomplete="username"></label>
+  <label>Password<input name="password" type="password" required autocomplete="current-password"></label>
+  <button type="submit">Login securely</button>
+ </form>
+ <p class="muted">For now, accounts are created by the project owner in Supabase. Do not share your password.</p>
+</section>
+<div id="studentView">
+ <section class="hero"><span class="tag">LEARN • PRACTISE • GROW</span><h2>Welcome to AC Learning</h2><p>Your learning space for courses, lectures, notes and tests.</p><button onclick="showTab('courses')">Explore Courses →</button></section>
+ <div class="ad">ADVERTISEMENT SPACE · Ads are not active yet</div>
+ <nav class="nav" id="studentNav">
+  <button class="active" data-tab="home">Home</button><button data-tab="courses">Courses</button><button data-tab="lectures">Lectures</button><button data-tab="notes">Notes</button><button data-tab="tests">Tests</button><button data-tab="announcements">Updates</button>
+ </nav>
+ <main id="studentContent"></main>
+</div>
+<div id="adminView" class="hidden">
+ <div class="notice">Admin access is checked from your Supabase profile. Only a profile with role = admin can manage content.</div>
+ <div class="section-head"><h2>Admin Dashboard</h2><button class="secondary" onclick="showAdmin(false)">← Student App</button></div>
+ <div class="grid" id="stats"></div>
+ <nav class="nav" id="adminNav">
+  <button class="active" data-admin="manage">Manage Content</button><button data-admin="add">Add Content</button>
+ </nav>
+ <main id="adminContent"></main>
+</div>
+
+<div id="playerModal" class="player-modal" role="dialog" aria-modal="true" aria-label="Video player">
+ <div class="player-shell">
+  <div class="player-top"><div><strong id="playerTitle">Lecture</strong><div class="muted">AC Learning Player</div></div><button class="secondary" onclick="closePlayer()">✕ Close</button></div>
+  <div id="playerStage" class="player-stage"></div>
+  <div class="player-controls">
+   <label>Speed
+    <select id="playerSpeed" onchange="changePlayerSpeed(this.value)">
+     <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="0.75">0.75×</option>
+     <option value="1" selected>1× Normal</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option>
+     <option value="1.75">1.75×</option><option value="2">2×</option>
+    </select>
+   </label>
+   <label id="qualityWrap" class="hidden">Quality
+    <select id="playerQuality" onchange="changePlayerQuality(this.value)"><option value="-1">Auto</option></select>
+   </label>
+   <button class="secondary" onclick="togglePlayerFullscreen()">⛶ Fullscreen</button>
+  </div>
+  <div id="playerHint" class="player-hint">Quality options depend on the video source. YouTube playback controls are provided by YouTube.</div>
+ </div>
+</div>
+
+<div class="footer">AC Learning · Learning platform</div>
+</div>
+<script>
+/* STEP 1: Replace only these two values with your Supabase Project URL and Publishable Key. */
+const SUPABASE_URL = "https://fexwbsjzwwznznvvmtke.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_mu91M2Ghx1HlUtuMLhMPMw_KHS4wVmb";
+
+let supabaseClient = null;
+let currentUser = null;
+let currentRole = "student";
+let activeTab = "home";
+let adminTab = "manage";
+let data = {courses:[], lessons:[], notes:[], tests:[], announcements:[]};
+
+const $ = (id) => document.getElementById(id);
+function msg(text, isError=false){ $("message").textContent=text; $("message").classList.toggle("error",isError); }
+function configured(){return SUPABASE_URL.startsWith("https://") && SUPABASE_ANON_KEY.startsWith("sb_publishable_");}
+function empty(text){return `<div class="empty">${text}</div>`}
+function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+async function init(){
+ if(!window.supabase){msg("Could not load Supabase library. Check your internet connection.",true);return;}
+ if(!configured()){msg("Setup needed: add your Project URL and Publishable Key in the two constants near the top of this file.");return;}
+ supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+ const {data:{session}}=await supabaseClient.auth.getSession();
+ if(session) await afterLogin(session.user);
+ await loadContent();
+}
+$("loginBtn").onclick=()=>{$("loginPanel").classList.toggle("hidden");};
+$("logoutBtn").onclick=async()=>{if(supabaseClient){await supabaseClient.auth.signOut();}currentUser=null;currentRole="student";$("logoutBtn").classList.add("hidden");$("loginBtn").classList.remove("hidden");showAdmin(false);$("loginPanel").classList.remove("hidden");msg("You are logged out.");};
+$("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();if(!supabaseClient){msg("First add your Supabase URL and Publishable Key.",true);return;}
+ const f=new FormData(e.target);
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email:f.get("email"),password:f.get("password")});
+ if(error){msg(error.message,true);return;}
+ await afterLogin(data.user);$("loginPanel").classList.add("hidden");await loadContent();
+});
+async function afterLogin(user){
+ currentUser=user;$("loginBtn").classList.add("hidden");$("logoutBtn").classList.remove("hidden");
+ const {data:profile,error}=await supabaseClient.from("profiles").select("role,full_name").eq("id",user.id).maybeSingle();
+ if(error){msg("Logged in, but profile could not be read: "+error.message,true);return;}
+ currentRole=profile?.role||"student";
+ msg("Logged in as "+(profile?.full_name||user.email)+" · "+currentRole);
+ if(currentRole==="admin") showAdmin(true); else showAdmin(false);
+}
+async function loadContent(){
+ if(!supabaseClient){renderStudent();return;}
+ const tables=["courses","lessons","notes","tests","announcements"];
+ for(const table of tables){
+  const {data:rows,error}=await supabaseClient.from(table).select("*").order("created_at",{ascending:false});
+  if(error){console.warn(table,error.message);data[table]=[];}else data[table]=rows||[];
+ }
+ renderStudent();if(currentRole==="admin")renderAdmin();
+}
+function showAdmin(show){$("adminView").classList.toggle("hidden",!show);$("studentView").classList.toggle("hidden",show);if(show)renderAdmin();}
+function showTab(tab){activeTab=tab;document.querySelectorAll("#studentNav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));renderStudent();}
+document.querySelectorAll("#studentNav button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function renderStudent(){
+ const root=$("studentContent");let out="";
+ if(activeTab==="home")out=`<div class="section-head"><h2>Your Classroom</h2></div><div class="grid">
+ <div class="card"><div class="stat">${data.courses.length}</div><div class="muted">Courses</div></div>
+ <div class="card"><div class="stat">${data.lessons.length}</div><div class="muted">Lectures</div></div>
+ <div class="card"><div class="stat">${data.tests.length}</div><div class="muted">Tests</div></div></div>
+ <div class="section-head"><h2>Popular Courses</h2><button class="secondary" onclick="showTab('courses')">View all</button></div>${courseCards(data.courses.slice(0,4))}`;
+ if(activeTab==="courses")out=`<div class="section-head"><h2>All Courses</h2></div>${courseCards(data.courses)}`;
+ if(activeTab==="lectures")out=`<div class="section-head"><h2>Video Lectures</h2></div>${data.lessons.length?`<div class="grid">${data.lessons.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><p class="muted">${esc(x.duration||"Lecture")}</p>${x.video_url?`<button onclick="openPlayer('${encodeURIComponent(x.video_url)}','${encodeURIComponent(x.title)}')">▶ Watch Lecture</button>`:""}</article>`).join("")}</div>`:empty("No lectures published yet.")}`;
+ if(activeTab==="notes")out=`<div class="section-head"><h2>Study Notes</h2></div>${data.notes.length?`<div class="grid">${data.notes.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><button onclick="window.open('${esc(x.file_url)}','_blank')">Open Notes ↗</button></article>`).join("")}</div>`:empty("No notes uploaded yet.")}`;
+ if(activeTab==="tests")out=`<div class="section-head"><h2>Tests & Practice</h2></div>${data.tests.length?`<div class="grid">${data.tests.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><p class="muted">${esc(x.total_marks||0)} marks</p></article>`).join("")}</div>`:empty("No tests published yet.")}`;
+ if(activeTab==="announcements")out=`<div class="section-head"><h2>Announcements</h2></div>${data.announcements.length?`<div class="grid">${data.announcements.map(x=>`<article class="card"><h3>${esc(x.title)}</h3><p>${esc(x.message)}</p></article>`).join("")}</div>`:empty("No announcements yet.")}`;
+ root.innerHTML=out;
+}
+function courseCards(items){return items.length?`<div class="grid">${items.map(x=>`<article class="card"><span class="tag">${esc(x.class_name||"")}</span><span class="tag">${esc(x.subject||"")}</span><h3>${esc(x.title)}</h3><p class="muted">${esc(x.description||"")}</p></article>`).join("")}</div>`:empty("No courses published yet.");}
+document.querySelectorAll("#adminNav button").forEach(b=>b.onclick=()=>{adminTab=b.dataset.admin;renderAdmin();});
+function renderAdmin(){
+ if(currentRole!=="admin")return;
+ document.querySelectorAll("#adminNav button").forEach(b=>b.classList.toggle("active",b.dataset.admin===adminTab));
+ $("stats").innerHTML=[["Courses",data.courses.length],["Lectures",data.lessons.length],["Notes",data.notes.length],["Tests",data.tests.length]].map(([a,b])=>`<div class="card"><div class="stat">${b}</div><div class="muted">${a}</div></div>`).join("");
+ const root=$("adminContent");
+ if(adminTab==="manage")root.innerHTML=`${adminList("courses","Courses")}${adminList("lessons","Lectures")}${adminList("notes","Notes")}${adminList("tests","Tests")}${adminList("announcements","Announcements")}`;
+ if(adminTab==="add")root.innerHTML=`<div class="card"><h3>Add Content</h3><form id="addForm" class="form">
+ <label>Content type<select name="type"><option value="courses">Course</option><option value="lessons">Video Lecture</option><option value="notes">Note / PDF</option><option value="tests">Test</option><option value="announcements">Announcement</option></select></label>
+ <label>Title<input name="title" required></label>
+ <label>Class (for course)<input name="class_name" placeholder="Class 9"></label>
+ <label>Subject<input name="subject" placeholder="Mathematics"></label>
+ <label>Description / Message<textarea name="description" rows="2"></textarea></label>
+ <label>Video URL (for lecture)<input name="video_url" type="url"></label>
+ <label>PDF URL (for note)<input name="file_url" type="url"></label>
+ <label>Total marks (for test)<input name="total_marks" type="number" min="0"></label>
+ <button type="submit">Save to Supabase</button></form></div>`;
+ const form=$("addForm");if(form)form.onsubmit=addContent;
+}
+function adminList(table,label){
+ return `<div class="section-head"><h2>${label}</h2></div>${data[table].length?`<div class="grid">${data[table].map(x=>`<article class="card"><h3>${esc(x.title)}</h3><div class="card-actions"><button class="danger" onclick="deleteContent('${table}','${x.id}')">Delete</button></div></article>`).join("")}</div>`:empty("No "+label.toLowerCase()+" added yet.")}`;
+}
+async function addContent(e){
+ e.preventDefault();if(currentRole!=="admin"){msg("Admin permission required.",true);return;}
+ const f=new FormData(e.target),type=f.get("type"),title=f.get("title").trim(),description=f.get("description");
+ let row={title};
+ if(type==="courses"){row.class_name=f.get("class_name")||"Class 9";row.subject=f.get("subject")||"General";row.description=description;row.is_published=true;}
+ if(type==="lessons"){row.title=title;row.video_url=f.get("video_url");row.is_published=true;}
+ if(type==="notes"){row.title=title;row.file_url=f.get("file_url");}
+ if(type==="tests"){row.total_marks=Number(f.get("total_marks")||0);row.is_published=true;}
+ if(type==="announcements"){row.message=description||title;}
+ const {error}=await supabaseClient.from(type).insert(row);
+ if(error){msg("Could not save: "+error.message,true);return;}
+ msg("Saved successfully to Supabase.");e.target.reset();await loadContent();adminTab="manage";renderAdmin();
+}
+async function deleteContent(table,id){
+ if(currentRole!=="admin"||!confirm("Delete this item?"))return;
+ const {error}=await supabaseClient.from(table).delete().eq("id",id);
+ if(error){msg("Delete failed: "+error.message,true);return;}
+ msg("Deleted.");await loadContent();
+}
+
+let activeHls = null;
+let youtubePlayer = null;
+let youtubeApiReady = false;
+let pendingYoutubeReady = null;
+
+function getYouTubeId(url){
+ try{
+  const u=new URL(url);
+  if(u.hostname.includes("youtu.be"))return u.pathname.slice(1);
+  if(u.hostname.includes("youtube.com")){
+   if(u.pathname==="/watch")return u.searchParams.get("v");
+   const m=u.pathname.match(/\/(embed|shorts|live)\/([^/?]+)/);return m?m[2]:null;
+  }
+ }catch(e){}
+ return null;
+}
+function getVimeoId(url){
+ try{const u=new URL(url);if(u.hostname.includes("vimeo.com")){const m=u.pathname.match(/\/(\d+)/);return m?m[1]:null;}}catch(e){}
+ return null;
+}
+function getTelegramEmbedUrl(url){
+ try{
+  const u=new URL(url);
+  if(!/(^|\.)t\.me$/i.test(u.hostname))return null;
+  const parts=u.pathname.split("/").filter(Boolean);
+  if(parts[0]==="s")parts.shift();
+  if(parts.length>=2 && /^\d+$/.test(parts[1])){
+   return "https://t.me/"+encodeURIComponent(parts[0])+"/"+encodeURIComponent(parts[1])+"?embed=1";
+  }
+ }catch(e){}
+ return null;
+}
+function loadYouTubeApi(){
+ if(window.YT&&window.YT.Player){youtubeApiReady=true;return Promise.resolve();}
+ return new Promise(resolve=>{
+  pendingYoutubeReady=resolve;
+  if(!document.getElementById("youtubeIframeApi")){
+   const s=document.createElement("script");s.id="youtubeIframeApi";s.src="https://www.youtube.com/iframe_api";document.head.appendChild(s);
+  }
+  const prior=window.onYouTubeIframeAPIReady;
+  window.onYouTubeIframeAPIReady=()=>{if(prior)prior();youtubeApiReady=true;if(pendingYoutubeReady)pendingYoutubeReady();};
+ });
+}
+async function openPlayer(encodedUrl,encodedTitle){
+ const url=decodeURIComponent(encodedUrl),title=decodeURIComponent(encodedTitle);
+ $("playerTitle").textContent=title;$("playerStage").innerHTML="";
+ $("playerModal").classList.add("open");document.body.style.overflow="hidden";
+ $("playerSpeed").value="1";$("qualityWrap").classList.add("hidden");
+ $("playerHint").textContent="Quality options depend on the video source. YouTube playback controls are provided by YouTube.";
+ if(activeHls){activeHls.destroy();activeHls=null;}youtubePlayer=null;
+ const ytId=getYouTubeId(url);
+ const vimeoId=getVimeoId(url);
+ if(ytId){
+  const iframe=document.createElement("iframe");
+  const params=new URLSearchParams({playsinline:"1",controls:"1",rel:"0"});
+  if(location.origin && location.origin!=="null") params.set("origin",location.origin);
+  iframe.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(ytId)+"?"+params.toString();
+  iframe.title=title;
+  iframe.referrerPolicy="strict-origin-when-cross-origin";
+  iframe.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen";
+  iframe.allowFullscreen=true;
+  iframe.style.width="100%";iframe.style.height="100%";iframe.style.border="0";
+  $("playerStage").appendChild(iframe);
+  $("playerHint").textContent="YouTube is embedded inside AC Learning. Use YouTube Settings for available quality and speed. If Error 153 appears in HopWeb Preview, the WebView is not supplying the Referer required by YouTube; an HTML page cannot force the app to provide it.";
+  return;
+ }
+ if(vimeoId){
+  const iframe=document.createElement("iframe");iframe.src="https://player.vimeo.com/video/"+encodeURIComponent(vimeoId)+"?title=0&byline=0&portrait=0";iframe.allow="autoplay; fullscreen; picture-in-picture";iframe.allowFullscreen=true;$("playerStage").appendChild(iframe);
+  $("playerHint").textContent="Vimeo is embedded inside AC Learning. Playback options depend on Vimeo and the video owner.";
+  return;
+ }
+ const telegramEmbed=getTelegramEmbedUrl(url);
+ if(telegramEmbed){
+  const iframe=document.createElement("iframe");
+  iframe.src=telegramEmbed;iframe.loading="lazy";iframe.allow="autoplay; fullscreen; picture-in-picture";iframe.allowFullscreen=true;
+  iframe.style.width="100%";iframe.style.height="100%";iframe.style.minHeight="360px";
+  $("playerStage").appendChild(iframe);
+  $("playerHint").textContent="Telegram public post is embedded inside AC Learning. The post must be from a public channel and allow embedding. Telegram controls quality and playback speed; private channel links cannot be embedded this way.";
+  return;
+ }
+ if(/(^|\.)t\.me\//i.test(url)){
+  $("playerHint").textContent="This Telegram link is not a public post URL. Use a public channel post link such as https://t.me/channelname/123. Private group/channel videos need Telegram access and cannot be played directly from a normal web link.";
+  return;
+ }
+ const video=document.createElement("video");video.controls=true;video.playsInline=true;video.preload="metadata";video.id="acVideo";$("playerStage").appendChild(video);
+ if(/\.m3u8(?:$|\?)/i.test(url)){
+  $("qualityWrap").classList.remove("hidden");
+  $("playerHint").textContent="HLS stream detected. Available quality levels will appear in the Quality menu.";
+  if(video.canPlayType("application/vnd.apple.mpegurl")){video.src=url;}
+  else{
+   const scriptId="hlsJsLibrary";
+   const setup=()=>{
+    if(!window.Hls){$("playerHint").textContent="HLS player library could not load.";return;}
+    if(!Hls.isSupported()){$("playerHint").textContent="This browser does not support HLS playback.";return;}
+    activeHls=new Hls();activeHls.loadSource(url);activeHls.attachMedia(video);
+    activeHls.on(Hls.Events.MANIFEST_PARSED,()=>{
+     const sel=$("playerQuality");sel.innerHTML='<option value="-1">Auto</option>';
+     activeHls.levels.forEach((level,i)=>{const o=document.createElement("option");o.value=String(i);o.textContent=(level.height?level.height+"p":"Level "+(i+1));sel.appendChild(o);});
+    });
+    activeHls.on(Hls.Events.ERROR,(event,data)=>{if(data.fatal)$("playerHint").textContent="This HLS stream could not be played. Check that the URL is valid and accessible."});
+   };
+   if(window.Hls)setup();else if(!document.getElementById(scriptId)){const s=document.createElement("script");s.id=scriptId;s.src="https://cdn.jsdelivr.net/npm/hls.js@latest";s.onload=setup;s.onerror=()=>{$("playerHint").textContent="Could not load HLS playback support.";};document.head.appendChild(s);}else{const wait=setInterval(()=>{if(window.Hls){clearInterval(wait);setup();}},150);}
+  }
+ }else{
+  video.src=url;
+  $("playerHint").textContent="Direct video playback. Speed works here. Quality choices appear only when the source provides an HLS stream with multiple resolutions.";
+  video.onerror=()=>{$("playerHint").textContent="This link did not play as a direct video. Use a direct MP4/HLS link, a YouTube/Vimeo link, or a public Telegram post link."};
+ }
+ video.play().catch(()=>{});
+}
+function changePlayerSpeed(value){
+ const speed=Number(value);
+ const video=$("acVideo");
+ if(video)video.playbackRate=speed;
+ if(youtubePlayer&&youtubePlayer.setPlaybackRate){youtubePlayer.setPlaybackRate(speed);}
+}
+function changePlayerQuality(value){if(activeHls)activeHls.currentLevel=Number(value);}
+function closePlayer(){
+ $("playerModal").classList.remove("open");$("playerStage").innerHTML="";document.body.style.overflow="";
+ if(activeHls){activeHls.destroy();activeHls=null;}youtubePlayer=null;
+}
+function togglePlayerFullscreen(){
+ const target=$("playerStage");
+ if(document.fullscreenElement){document.exitFullscreen?.();}
+ else{target.requestFullscreen?.();}
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("playerModal").classList.contains("open"))closePlayer();});
+
+$("themeBtn").onclick=()=>{document.body.classList.toggle("light");if(document.body.classList.contains("light")){document.body.style.background="#eef2ff";document.body.style.color="#121a33";}else{document.body.style.background="var(--bg)";document.body.style.color="var(--text)";}};
+init();
+</script>
+</body>
+     </html>
